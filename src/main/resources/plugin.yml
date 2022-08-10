@@ -1,0 +1,8 @@
+name: Dry
+version: '${project.version}'
+main: me.rominer_11.dry.Dry
+authors: [ rominer_11 ]
+description: Almost RLCraft
+commands:
+  track:
+    description: Command
