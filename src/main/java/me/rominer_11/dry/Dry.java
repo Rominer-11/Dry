@@ -1,7 +1,10 @@
 package me.rominer_11.dry;
 
+import me.rominer_11.dry.Files.TemperData;
+import me.rominer_11.dry.Listeners.Temperature;
 import net.minecraft.server.v1_8_R3.ChatComponentText;
 import net.minecraft.server.v1_8_R3.PacketPlayOutChat;
+import net.minecraft.server.v1_8_R3.PacketPlayOutTitle;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -13,7 +16,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitScheduler;
 
@@ -23,21 +25,30 @@ import static org.bukkit.Bukkit.getPlayer;
 
 public final class Dry extends JavaPlugin implements Listener {
 
-    ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
-    private static Dry plugin;
+
+    public static Dry plugin;
     public static HashMap<Player, Player> tracking = new HashMap<>();
     BukkitScheduler scheduler = getServer().getScheduler();
+    ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
 
+        // Config.yml
+        getConfig().options().copyDefaults();
+        saveDefaultConfig();
+
+        // Temperature logic
+        new Temperature();
+        TemperData.init();
+        TemperData.get().options().copyDefaults(true);
+        TemperData.save();
+
+        // Events and runnables
         getServer().getPluginManager().registerEvents(this, this);
-        Bukkit.dispatchCommand(console, "gamerule naturalRegeneration false");
-
         scheduler.scheduleSyncRepeatingTask(this, Dry::track, 100, 100);
 
-
+        Bukkit.dispatchCommand(console, "gamerule naturalRegeneration false");
     }
 
     @Override
@@ -50,12 +61,6 @@ public final class Dry extends JavaPlugin implements Listener {
         Player player = event.getEntity();
         player.setGameMode(GameMode.SPECTATOR);
     }
-
-    @EventHandler
-    public void onPlayerMove(PlayerMoveEvent event) {
-        Player player = event.getPlayer();
-    }
-
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -98,7 +103,7 @@ public final class Dry extends JavaPlugin implements Listener {
         return true;
     }
 
-    static void ActionBar(Player player, String message) {
+    public static void ActionBar(Player player, String message) {
         PacketPlayOutChat packet = new PacketPlayOutChat(new ChatComponentText(message), (byte)2);
         ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet);
     }
